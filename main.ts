@@ -8,11 +8,19 @@
 // stand in for /bot and /output:
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const BOT_DIR = process.env.MAKEFUN_BOT_DIR ?? '/bot';
 const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+
+// Fail fast when POST.json does not name an X post address, instead of
+// handing the gate a placeholder or a malformed file.
+const post = JSON.parse(readFileSync(join(BOT_DIR, 'POST.json'), 'utf8'));
+if (typeof post?.url !== 'string' || !post.url.startsWith('https://x.com/')) {
+  console.error('POST.json does not name an X post address');
+  process.exit(1);
+}
 
 mkdirSync(OUTPUT_DIR, { recursive: true });
 try {
